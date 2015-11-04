@@ -4,7 +4,7 @@
 
 import lxml
 import lxml.html
-import os
+import json,codecs
 import urllib2
 
 
@@ -20,14 +20,29 @@ class Item:
         self.category = _details['category']
         self.type = _details['type']
         self.brand = _details['brand']
-        self.rarity = _details['rarity']
-        self.like = _details['like']
-        self.color = _details['color']
+        self.rarity = _details['rarity'] if _details['rarity'] != ' ' else ''
+        self.like = _details['like'] if _details['like'] != ' ' else ''
+        self.color = _details['color'] if _details['color'] != ' ' else ''
+
+
+    def to_dict(self):
+        d = {
+            'image': self.image,
+            'name': self.name,
+            'id': self.id,
+            'category': self.category,
+            'type': self.type,
+            'brand': self.brand,
+            'rarity': self.rarity,
+            'like': self.like,
+            'color': self.color,
+        }
+        return d
 
     def __getItemDetails(self, dom):
         details = {}
         # image url
-        details['image'] = dom.find('p').find('img').attrib['src']
+        details['image'] = self.__base_url + dom.find('p').find('img').attrib['src']
         # id
         id = dom.find('div').find('h2').find('span').text
         if isinstance(id, type(None)):
@@ -47,7 +62,7 @@ class Item:
         # brand
         brand = table_upper.findall('td')[2]
         if isinstance(brand.text, type(None)):
-            details['brand'] = brand.find('img').attrib['src']
+            details['brand'] = brand.find('img').attrib['alt']
         else:
             details['brand'] = ''
         # rarity
@@ -89,9 +104,16 @@ item_url = 'http://pripara.jp/item/dream201511_4th.html'
 item_sub_urls = fetch_item_urls(item_url)
 item_urls = [base_url + item_sub_url for item_sub_url in item_sub_urls]
 
-for item_url in item_urls:
-    items = fetch_items(item_url)
+pripara_items = {}
 
+for item_url in item_urls:
+    season = item_url.replace(base_url, '')[:-5]
+    items = fetch_items(item_url)
     for dom in items:
         item = Item(dom)
-        print item.name
+        d = { unicode(item.id) : item.to_dict()}
+        pripara_items.setdefault(season,[]).append(d)
+
+f=codecs.open('pripara_code.json', 'w', 'utf-8')
+json.dump(pripara_items, f, indent=2,ensure_ascii=False)
+f.close()
