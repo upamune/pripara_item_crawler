@@ -5,6 +5,7 @@
 import lxml
 import lxml.html
 import json,codecs
+import unicodedata
 import urllib2
 
 
@@ -14,6 +15,9 @@ class Item:
 
     def __init__(self, dom):
         _details = self.__getItemDetails(dom)
+        for key in _details:
+            _details[key] = unicodedata.normalize('NFKC', unicode(_details[key]))
+
         self.image = _details['image']
         self.name = _details['name']
         self.id = _details['id']
