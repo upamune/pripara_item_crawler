@@ -18,16 +18,20 @@ class Item:
         for key in _details:
             _details[key] = unicodedata.normalize('NFKC', unicode(_details[key]))
 
-        self.image = _details['image']
+        self.image = self.__covertS3(_details['image'])
         self.name = _details['name']
         self.id = _details['id']
         self.category = _details['category']
         self.type = _details['type']
         self.brand = _details['brand']
-        self.rarity = _details['rarity'] if _details['rarity'] != ' ' else ''
-        self.like = _details['like'] if _details['like'] != ' ' else ''
-        self.color = _details['color'] if _details['color'] != ' ' else ''
+        self.rarity = _details['rarity'] if _details['rarity'] != ' ' else 'nullrarity'
+        _details['like'] = '0' if _details['like'] == '?' else _details['like']
+        try:
+            self.like = _details['like'] if int(_details['like']) != ' ' else 0
+        except ValueError:
+            self.like = 0
 
+        self.color = _details['color'] if _details['color'] != ' ' else 'nullcolor'
 
     def to_dict(self):
         d = {
@@ -50,7 +54,7 @@ class Item:
         # id
         id = dom.find('div').find('h2').find('span').text
         if isinstance(id, type(None)):
-            details['id'] = ''
+            details['id'] = 'nullid'
         else:
             details['id'] = id
         # name
@@ -68,7 +72,7 @@ class Item:
         if isinstance(brand.text, type(None)):
             details['brand'] = brand.find('img').attrib['alt']
         else:
-            details['brand'] = ''
+            details['brand'] = 'nullbrand'
         # rarity
         details['rarity'] = table_lower.findall('td')[0].text
         # like
@@ -77,6 +81,10 @@ class Item:
         details['color'] = table_lower.findall('td')[2].text
 
         return details
+
+    def __convertS3(self, image_url):
+
+        return ''
 
 
 def fetch_item_urls(item_url):
@@ -113,6 +121,7 @@ pripara_items = {}
 for item_url in item_urls:
     season = item_url.replace(base_url, '')[:-5]
     items = fetch_items(item_url)
+    print season
     for dom in items:
         item = Item(dom)
         d = { unicode(item.id) : item.to_dict()}
