@@ -7,6 +7,9 @@ import lxml.html
 import json,codecs
 import unicodedata
 import urllib2
+import hashlib
+from boto.s3.connection import S3Connection
+from boto.s3.key import Key
 
 
 class Item:
@@ -18,7 +21,7 @@ class Item:
         for key in _details:
             _details[key] = unicodedata.normalize('NFKC', unicode(_details[key]))
 
-        self.image = self.__covertS3(_details['image'])
+        self.image = self.__convertS3(_details['image'])
         self.name = _details['name']
         self.id = _details['id']
         self.category = _details['category']
@@ -82,9 +85,22 @@ class Item:
 
         return details
 
-    def __convertS3(self, image_url):
+    def __generate_hash(self,url):
+        return hashlib.md5(url).hexdigest()
 
-        return ''
+    def __convertS3(self, image_url):
+        aws_access_key_id = 'AKIAIXDB6A77I3CMBY6Q'
+        aws_secret_access_key = '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'
+        
+        conn = S3Connection( aws_access_key_id, aws_secret_access_key)
+        bucket = conn.get_bucket('pripara')
+        
+        f = Key(bucket)
+        f.key = self.__generate_hash(image_url) + '.jpg'
+        f.set_contents_from_string(urllib2.urlopen(image_url).read())
+        f.make_public()
+
+        return f.generate_url(expires_in=0, query_auth=False)
 
 
 def fetch_item_urls(item_url):
@@ -109,6 +125,7 @@ def fetch_items(url):
         '//*[@id="contentBodyMain"]/div/div[2]/div[3]/div')
 
     return items
+
 
 
 base_url = 'http://pripara.jp/item/'
