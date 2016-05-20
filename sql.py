@@ -15,7 +15,7 @@ def item_to_sql(item, seeason):
     likes = item[u'like']
     color = item[u'color']
 
-    sql = "INSERT INTO %s (code, name, imageURL, category, type, brand, rarity, likes, color, season) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s') \n" % (table_name, id, name, image, category, type, brand, rarity, int(likes), color, season)
+    sql = "INSERT INTO %s (code, name, imageURL, category, type, brand, rarity, likes, color, season) VALUES ('%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, '%s', '%s') \n" % (table_name, id, name, image, category, type, brand, rarity, int(likes), color, season)
 
     return sql
 
